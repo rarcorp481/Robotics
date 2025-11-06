@@ -4,12 +4,15 @@ import motor_pair
 import motor
 import color_sensor
 import color
+import distance_sensor
 from hub import light_matrix, sound
 
 # --- 1. DEFINICIÓN DE PUERTOS Y CONSTANTES ---
-motor_izquierda = port.F
-motor_derecha = port.B
-puerto_garra = port.E
+motor_izquierda = port.C
+motor_derecha = port.D
+puerto_garra = port.F
+puerto_sensor_ultrasonico = port.E
+
 
 
 # CONSTANTES FÍSICAS (clave para la clase de conversiones)
@@ -96,7 +99,7 @@ def retroceder_indefinidamente(velocidad: int = 500) -> None:
     motor_pair.move(motor_pair.PAIR_1, 0, velocity=-velocidad)
 
 # --- 6. FUNCIÓN PAUSA ---
-async def pausa(segundos: float = 2) -> None:
+async def pausa(segundos: float = 1) -> None:
     """Pausa asíncrona no bloqueante. Por defecto, 2 segundos."""
     await runloop.sleep_ms(int(segundos * 1000))
 
@@ -112,49 +115,78 @@ async def detener() -> None:
     """Detener movimiento. Por defecto para el par 1."""
     motor_pair.stop(motor_pair.PAIR_1)
 
+#--- 8. FUNCIÓN SENSOR ULTRASÓNICO ---
+async def avanzar_hasta_detectar_objeto(distancia_cm) -> None:
+    """Detiene el movimiento hasta que el sensor detecte un objeto a cierta distancia. Por defecto para el par 1"""
+
+    while True:
+        avanzar_indefinidamente()
+        distancia = distance_sensor.distance(puerto_sensor_ultrasonico) #asignar variable para guardar la distancia del sensor ultrasónico
+
+        if distancia <= distancia_cm*10:
+            motor_pair.stop(motor_pair.PAIR_1)
+            break
 
 # --- FUNCIÓN PRINCIPAL Y EJECUCIÓN ---
 async def main():
     # Inicialización del par de motores
     motor_pair.pair(motor_pair.PAIR_1, motor_izquierda, motor_derecha)
-    
-    #Bloque 1: Movimiento hacia la palanca para sacar
-    await subir_garra()
-    await pausa(0.5)
-    await avanzar_cm(113)
-    await pausa(0.5)
-    await girar_izquierda_fase()
-    await pausa(0.5)
-    await avanzar_cm(50)
 
-   #Bloque 2: Movimiento para retroceder y jalar el bloque rojo
-    await bajar_garra() # Se "enllava" para jalar la pieza que tiene que mover
-    await pausa(0.5)
-    await retroceder_cm(14)
-    await pausa(0.5)
+    # Reto 1: Dejar el bloque negro en su lugar
     await subir_garra()
-    await pausa(0.5)
-
-    #Bloque 3: Avanzar y agarrar el bloque rojo
-    await retroceder_cm(5)
-    await pausa(0.5)
+    await pausa()
+    await avanzar_cm(24)
+    await pausa()
     await girar_derecha_fase()
-    await pausa(0.5)
-    await avanzar_cm(50)
-    await pausa(0.5)
-    await bajar_garra() #Este movimiento agarra el bloque 
-    await pausa(0.5)
-
-    #Bloque 4: Retroceder y poner el bloque en su sitio 
-    await retroceder_cm(5)
-    await pausa(0.5)
-    await girar_izquierda_fase(120) #Para que el robot gire en dirección correcta a la línea de meta para dejar el bloque
-    await pausa(0.5)
-    await avanzar_cm(50)
-    await pausa(0.5)
+    await pausa()
+    await avanzar_cm(68)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(14)
+    await pausa()
+    await bajar_garra()
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(15)
+    await pausa()
+    await girar_derecha_fase()
+    await avanzar_cm(38)
+    await pausa()
     await subir_garra()
-    await pausa(0.5)
-    await retroceder_cm(5)
+    await pausa()
+    await avanzar_cm(6)
+    await pausa()
+    await retroceder_cm(46.5)
+    await pausa()
+    await girar_derecha_fase()
+    await pausa()
 
-# Línea de código para correr el programa del robot
-runloop.run(main()) 
+    #Reto 2: Dejar el bloque verde en su lugar
+    await avanzar_cm(83)
+    await pausa()
+    await bajar_garra()
+    await pausa()
+    await retroceder_cm(143)
+    await pausa()
+    await girar_derecha_fase()
+    await pausa()
+    await avanzar_cm(30)
+    await pausa()
+    await subir_garra()
+    
+    #Reto 3: Subir la palanca (está mal, requiere un ajuste en la velocidad de garra y distancias)
+    await retroceder_cm(20)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(121)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(50)
+    await pausa()
+    await subir_garra(90, 3000)
+
+runloop.run(main())      

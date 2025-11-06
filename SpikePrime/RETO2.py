@@ -117,8 +117,8 @@ async def detener() -> None:
 async def main():
     # Inicialización del par de motores
     motor_pair.pair(motor_pair.PAIR_1, motor_izquierda, motor_derecha)
-    
-    #Bloque 1: Movimiento hacia el bloque de color
+   
+    #Bloque 1: Movimiento hacia la posición para detectar el color del bloque
     await subir_garra()
     await pausa(0.5)
     await avanzar_cm(113)
@@ -131,16 +131,20 @@ async def main():
     await pausa(0.5)
 
 
-    #Bloque 2: Sensor de color (verde)
+
+
+    #Bloque 2: Detectar el color verde con el sensor
     while True:
         avanzar_indefinidamente()
         puerto_color = color_sensor.color(port.A)
 
+
         if puerto_color == color.GREEN:
             await detener()
-        
+       
 
-            #Bloque 3: Movimiento hacia la carga
+
+            #Bloque 3: Mover el robot hacia la carga
             await retroceder_cm(20)
             await pausa(0.5)
             await girar_izquierda_fase()
@@ -155,6 +159,7 @@ async def main():
             await pausa(0.5)
             await avanzar_cm(20)
 
+
             #Bloque 4: Agarrar la carga y posicionarla en su destino
             await bajar_garra()
             await pausa(0.5)
@@ -162,11 +167,12 @@ async def main():
             await pausa(0.5)
             await avanzar_cm(60)
             await pausa(0.5)
-            await girar_izquierda_fase() #ajustar por el peso de la garra
+            await girar_izquierda_fase() #ajustar por peso de garra
             await pausa(0.5)
             await avanzar_cm(30)
             await subir_garra()
             await pausa(0.5)
+
 
             #Bloque 5: Presionar los dos interruptores
             await retroceder_cm(10)
@@ -185,12 +191,13 @@ async def main():
             await pausa(0.5)
             await girar_derecha_fase()
             await pausa(0.5)
-            await girar_derecha_fase() 
+            await girar_derecha_fase()
             await pausa(0.5)
-            await bajar_garra() #ajustar para hacer hacia atras la palanca
+            await bajar_garra() #ajuste para mover la palanca
             await pausa(0.5)
             await retroceder_cm(10)
             break
 
 # Acá se llama a la función main definida.
 runloop.run(main())  
+

@@ -4,12 +4,14 @@ import motor_pair
 import motor
 import color_sensor
 import color
+import distance_sensor
 from hub import light_matrix, sound
 
 # --- 1. DEFINICIÓN DE PUERTOS Y CONSTANTES ---
 motor_izquierda = port.F
 motor_derecha = port.B
 puerto_garra = port.E
+puerto_sensor_ultrasonico = port.A
 
 
 # CONSTANTES FÍSICAS (clave para la clase de conversiones)
@@ -112,49 +114,55 @@ async def detener() -> None:
     """Detener movimiento. Por defecto para el par 1."""
     motor_pair.stop(motor_pair.PAIR_1)
 
+#--- 8. FUNCIÓN SENSOR ULTRASÓNICO ---
+async def avanzar_hasta_detectar_objeto(distancia_cm) -> None:
+    """Detiene el movimiento hasta que el sensor detecte un objeto a cierta distancia. Por defecto para el par 1"""
+    avanzar_indefinidamente()
+    while True:
+        distancia = distance_sensor.distance(puerto_sensor_ultrasonico) #asignar variable para guardar la distancia del sensor ultrasónico
+
+        if distancia <= distancia_cm*10:
+            motor_pair.stop(motor_pair.PAIR_1)
+            break
 
 # --- FUNCIÓN PRINCIPAL Y EJECUCIÓN ---
 async def main():
     # Inicialización del par de motores
     motor_pair.pair(motor_pair.PAIR_1, motor_izquierda, motor_derecha)
-    
-    #Bloque 1: Movimiento hacia la palanca para sacar
-    await subir_garra()
-    await pausa(0.5)
-    await avanzar_cm(113)
-    await pausa(0.5)
-    await girar_izquierda_fase()
-    await pausa(0.5)
-    await avanzar_cm(50)
 
-   #Bloque 2: Movimiento para retroceder y jalar el bloque rojo
-    await bajar_garra() # Se "enllava" para jalar la pieza que tiene que mover
-    await pausa(0.5)
-    await retroceder_cm(14)
-    await pausa(0.5)
+    # Desición 1: Avanzar hasta detectar un objeto a cierta distancia
+    await avanzar_hasta_detectar_objeto(15)
+    await pausa()
     await subir_garra()
-    await pausa(0.5)
 
-    #Bloque 3: Avanzar y agarrar el bloque rojo
-    await retroceder_cm(5)
-    await pausa(0.5)
+    # Bloque 1: Posiciona el robot en frente de la pelota
+    await pausa()
     await girar_derecha_fase()
-    await pausa(0.5)
-    await avanzar_cm(50)
-    await pausa(0.5)
-    await bajar_garra() #Este movimiento agarra el bloque 
-    await pausa(0.5)
+    await pausa()
+    await avanzar_cm(40)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(90)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(32.5)
+    await pausa()
 
-    #Bloque 4: Retroceder y poner el bloque en su sitio 
-    await retroceder_cm(5)
-    await pausa(0.5)
-    await girar_izquierda_fase(120) #Para que el robot gire en dirección correcta a la línea de meta para dejar el bloque
-    await pausa(0.5)
-    await avanzar_cm(50)
-    await pausa(0.5)
+    # Bloque 2: Bajar la garra y mover la pelota hacia la línea de meta
+    await bajar_garra()
+    await pausa()
+    await retroceder_cm(41.5)
+    await pausa()
+    await girar_izquierda_fase()
+    await pausa()
+    await avanzar_cm(95)
+
+    # Bloque 3: Subir la garra y empujar la pelota
     await subir_garra()
-    await pausa(0.5)
-    await retroceder_cm(5)
+    await pausa()
+    await avanzar_cm(8)
 
-# Línea de código para correr el programa del robot
-runloop.run(main()) 
+
+runloop.run(main())
